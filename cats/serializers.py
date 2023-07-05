@@ -1,5 +1,5 @@
 from rest_framework import serializers
-# from rest_framework.validators import UniqueTogetherValidator
+from rest_framework.validators import UniqueTogetherValidator
 
 import datetime as dt
 
@@ -27,7 +27,10 @@ class CatSerializer(serializers.ModelSerializer):
     achievements = AchievementSerializer(many=True, required=False)
     color = serializers.ChoiceField(choices=CHOICES)
     age = serializers.SerializerMethodField()
-    owner = serializers.PrimaryKeyRelatedField(read_only=True)
+    owner = serializers.PrimaryKeyRelatedField(
+        read_only=True,
+        default=serializers.CurrentUserDefault()
+    )
 
     class Meta:
         model = Cat
@@ -41,6 +44,12 @@ class CatSerializer(serializers.ModelSerializer):
             'age'
         )
         read_only_fields = ('owner',)
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Cat.objects.all(),
+                fields=('name', 'owner')
+            )
+        ]
 
     def validate_birth_year(self, value):
         year = dt.date.today().year
